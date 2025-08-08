@@ -26,7 +26,15 @@ export default {
 				foreground: 'hsl(var(--foreground))',
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))'
+					foreground: 'hsl(var(--primary-foreground))',
+					glow: 'hsl(var(--primary-glow))'
+				},
+				voice: {
+					primary: 'hsl(var(--voice-primary))',
+					secondary: 'hsl(var(--voice-secondary))',
+					success: 'hsl(var(--voice-success))',
+					warning: 'hsl(var(--voice-warning))',
+					error: 'hsl(var(--voice-error))'
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
