@@ -60,14 +60,59 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
-## How can I deploy this project?
+## Local development (frontend + backend)
 
-Simply open [Lovable](https://lovable.dev/projects/0749d947-7180-4df6-9b93-8ee135c26a1e) and click on Share -> Publish.
+1) Frontend
 
-## Can I connect a custom domain to my Lovable project?
+```bash
+npm install
+npm run dev
+# opens on http://localhost:8080
+```
 
-Yes, you can!
+2) Backend (Express; Vapi optional)
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```bash
+cd server
+npm install
+cp .env.example .env # then edit with your keys
+npm run dev
+# backend on http://localhost:3001 (set PORT to override)
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Backend env (create `server/.env`):
+- `PORT=8081`
+- `CORS_ORIGIN=http://localhost:8080`
+- `MONGODB_URI=mongodb://localhost:27017/voice-agent-db` (or your MongoDB connection string)
+- Optional Vapi: `VAPI_API_KEY=...` (if you add the Vapi server SDK)
+
+Optional env (frontend):
+- `VITE_API_BASE=http://localhost:3001`
+- `VITE_VAPI_PUBLIC_KEY=<public key>`
+
+### Backend API
+
+- `GET /api/health`
+- `GET /api/agents`
+- `POST /api/agents` (body: agent config)
+- `GET /api/agents/:id`
+- `PUT /api/agents/:id`
+- `DELETE /api/agents/:id`
+- `POST /api/agents/:id/publish`
+- `POST /api/agents/:id/preview-call`
+- `GET /api/calls` (see Vapi docs `calls/list`)
+
+### MongoDB Setup
+- **Local MongoDB:** Install MongoDB locally and it will auto-connect to `mongodb://localhost:27017/voice-agent-db`
+- **MongoDB Atlas:** Get connection string from Atlas and set `MONGODB_URI` in backend `.env`
+- **No MongoDB:** Backend gracefully falls back to in-memory storage
+
+**🎉 Vapi Integration Status: READY**
+
+The application now includes full Vapi integration with the official Server SDK installed. To enable real voice agents:
+
+1. Set up your API keys (see [SETUP_GUIDE.md](./SETUP_GUIDE.md))
+2. Create environment files with your Vapi credentials
+3. Start the application - agents will be automatically created in Vapi
+
+**Without API keys**: The app gracefully falls back to simulation mode with all UI features working.

@@ -1,21 +1,27 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
-  Plus, 
-  Trash2, 
-  GripVertical, 
-  Settings, 
-  Save, 
-  Play, 
+import {
+  Plus,
+  Trash2,
+  GripVertical,
+  Settings,
+  Save,
+  Play,
   ArrowLeft,
   User,
   Mail,
@@ -24,27 +30,10 @@ import {
   Calendar,
   DollarSign,
   FileText,
-  Hash
+  Hash,
 } from "lucide-react";
-
-interface FormField {
-  id: string;
-  type: 'text' | 'email' | 'phone' | 'address' | 'date' | 'number' | 'textarea' | 'select';
-  label: string;
-  required: boolean;
-  placeholder?: string;
-  options?: string[];
-}
-
-interface AgentConfig {
-  name: string;
-  industry: string;
-  description: string;
-  model: string;
-  voice: string;
-  prompt: string;
-  fields: FormField[];
-}
+import type { AgentConfig, FormField, AgentFunction } from "@/types/agent";
+import { AgentsAPI } from "@/lib/api";
 
 interface AgentBuilderProps {
   onBack: () => void;
@@ -52,56 +41,122 @@ interface AgentBuilderProps {
 }
 
 const fieldTypes = [
-  { type: 'text', label: 'Text Input', icon: FileText, color: 'bg-blue-500' },
-  { type: 'email', label: 'Email', icon: Mail, color: 'bg-green-500' },
-  { type: 'phone', label: 'Phone Number', icon: Phone, color: 'bg-purple-500' },
-  { type: 'address', label: 'Address', icon: MapPin, color: 'bg-red-500' },
-  { type: 'date', label: 'Date', icon: Calendar, color: 'bg-orange-500' },
-  { type: 'number', label: 'Number', icon: Hash, color: 'bg-indigo-500' },
-  { type: 'textarea', label: 'Long Text', icon: FileText, color: 'bg-pink-500' },
+  { type: "text", label: "Text Input", icon: FileText, color: "bg-blue-500" },
+  { type: "email", label: "Email", icon: Mail, color: "bg-green-500" },
+  { type: "phone", label: "Phone Number", icon: Phone, color: "bg-purple-500" },
+  { type: "address", label: "Address", icon: MapPin, color: "bg-red-500" },
+  { type: "date", label: "Date", icon: Calendar, color: "bg-orange-500" },
+  { type: "number", label: "Number", icon: Hash, color: "bg-indigo-500" },
+  {
+    type: "textarea",
+    label: "Long Text",
+    icon: FileText,
+    color: "bg-pink-500",
+  },
 ];
 
 export const AgentBuilder = ({ onBack, onPreview }: AgentBuilderProps) => {
   const [config, setConfig] = useState<AgentConfig>({
-    name: '',
-    industry: '',
-    description: '',
-    model: 'gpt-4',
-    voice: 'rachel',
-    prompt: '',
-    fields: []
+    name: "",
+    industry: "",
+    description: "",
+    model: "gpt-4",
+    voice: "rachel",
+    prompt: "",
+    fields: [],
+    tools: [],
   });
+  const [saving, setSaving] = useState(false);
 
   const [selectedField, setSelectedField] = useState<FormField | null>(null);
+
+  // Generate collectFormData tool based on provided fields
+  const generateCollectFormDataTool = (fields: FormField[]): AgentFunction => {
+    const properties: Record<string, { type: string; description: string }> = {};
+    const required: string[] = [];
+
+    fields.forEach((field) => {
+      properties[field.id] = {
+        type: field.type === 'number' ? 'number' : 'string',
+        description: `The ${field.label.toLowerCase()} value collected from the user`,
+      };
+      if (field.required) {
+        required.push(field.id);
+      }
+    });
+
+    return {
+      id: 'collectFormData',
+      name: 'collectFormData',
+      description: 'Collect form data from the user during conversation',
+      parameters: {
+        type: 'object',
+        properties,
+        required,
+      },
+    };
+  };
+
+  // Update tools whenever fields change
+  const updateTools = () => {
+    if (config.fields.length > 0) {
+      const collectFormDataTool = generateCollectFormDataTool(config.fields);
+      setConfig((prev) => ({
+        ...prev,
+        tools: [collectFormDataTool],
+      }));
+    } else {
+      setConfig((prev) => ({
+        ...prev,
+        tools: [],
+      }));
+    }
+  };
 
   const addField = (type: string) => {
     const newField: FormField = {
       id: `field_${Date.now()}`,
-      type: type as FormField['type'],
+      type: type as FormField["type"],
       label: `${type.charAt(0).toUpperCase() + type.slice(1)} Field`,
       required: false,
       placeholder: `Enter ${type}...`,
     };
-    setConfig(prev => ({
-      ...prev,
-      fields: [...prev.fields, newField]
-    }));
+    setConfig((prev) => {
+      const updatedConfig = {
+        ...prev,
+        fields: [...prev.fields, newField],
+      };
+      // Generate tools for the updated config
+       const collectFormDataTool = generateCollectFormDataTool(updatedConfig.fields);
+      return {
+        ...updatedConfig,
+        tools: updatedConfig.fields.length > 0 ? [collectFormDataTool] : [],
+      };
+    });
   };
 
   const removeField = (fieldId: string) => {
-    setConfig(prev => ({
-      ...prev,
-      fields: prev.fields.filter(field => field.id !== fieldId)
-    }));
+    setConfig((prev) => {
+      const updatedFields = prev.fields.filter((field) => field.id !== fieldId);
+      return {
+        ...prev,
+        fields: updatedFields,
+        tools: updatedFields.length > 0 ? [generateCollectFormDataTool(updatedFields)] : [],
+      };
+    });
   };
 
   const updateField = (fieldId: string, updates: Partial<FormField>) => {
-    setConfig(prev => ({
-      ...prev,
-      fields: prev.fields.map(field => 
+    setConfig((prev) => {
+      const updatedFields = prev.fields.map((field) =>
         field.id === fieldId ? { ...field, ...updates } : field
-      )
-    }));
+      );
+      return {
+        ...prev,
+        fields: updatedFields,
+        tools: updatedFields.length > 0 ? [generateCollectFormDataTool(updatedFields)] : [],
+      };
+    });
   };
 
   const onDragEnd = (result: any) => {
@@ -111,18 +166,23 @@ export const AgentBuilder = ({ onBack, onPreview }: AgentBuilderProps) => {
     const [reorderedItem] = fields.splice(result.source.index, 1);
     fields.splice(result.destination.index, 0, reorderedItem);
 
-    setConfig(prev => ({ ...prev, fields }));
+    setConfig((prev) => ({ ...prev, fields }));
   };
 
   const getFieldIcon = (type: string) => {
-    const fieldType = fieldTypes.find(ft => ft.type === type);
+    const fieldType = fieldTypes.find((ft) => ft.type === type);
     return fieldType ? fieldType.icon : FileText;
   };
 
   const generatePrompt = () => {
-    const fieldDescriptions = config.fields.map(field => 
-      `- ${field.label} (${field.type}${field.required ? ', required' : ''})`
-    ).join('\n');
+    const fieldDescriptions = config.fields
+      .map(
+        (field) =>
+          `- ${field.label} (${field.type}${
+            field.required ? ", required" : ""
+          })`
+      )
+      .join("\n");
 
     const prompt = `You are a professional ${config.industry} assistant specialized in data collection. Your task is to collect the following information from customers through natural conversation:
 
@@ -132,13 +192,32 @@ Guidelines:
 - Be friendly, professional, and conversational
 - Ask for information in a logical order
 - Validate responses appropriately
-- Confirm all collected data before submission
+- Use the collectFormData function to store each piece of information as you collect it
+- You can call collectFormData multiple times during the conversation to store different fields
+- Confirm all collected data before ending the conversation
 - Handle objections or questions professionally
-- Use the provided functions to collect and store data
 
-Always confirm the collected information with the customer before proceeding with submission.`;
+IMPORTANT: Use the collectFormData function to store information as you collect it. The function accepts field IDs and their corresponding values. Call this function each time you successfully collect a piece of information from the user.`;
 
-    setConfig(prev => ({ ...prev, prompt }));
+    setConfig((prev) => ({ ...prev, prompt }));
+  };
+
+  const saveAgent = async () => {
+    setSaving(true);
+    try {
+      const payload: AgentConfig = { ...config };
+      console.log("[DEBUG] Saving agent with payload:", payload);
+      console.log("[DEBUG] Tools in payload:", payload.tools);
+      const saved = await AgentsAPI.create(payload);
+      console.log("[DEBUG] Saved agent response:", saved);
+      setConfig((prev) => ({
+        ...prev,
+        id: saved.id,
+        createdAt: saved.createdAt,
+      }));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -154,7 +233,9 @@ Always confirm the collected information with the customer before proceeding wit
               </Button>
               <div>
                 <h1 className="text-2xl font-bold">Agent Builder</h1>
-                <p className="text-muted-foreground">Design your conversational AI agent</p>
+                <p className="text-muted-foreground">
+                  Design your conversational AI agent
+                </p>
               </div>
             </div>
             <div className="flex space-x-2">
@@ -162,9 +243,9 @@ Always confirm the collected information with the customer before proceeding wit
                 <Settings className="w-4 h-4 mr-2" />
                 Generate Prompt
               </Button>
-              <Button variant="voice">
+              <Button variant="voice" onClick={saveAgent} disabled={saving}>
                 <Save className="w-4 h-4 mr-2" />
-                Save
+                {saving ? "Saving..." : "Save"}
               </Button>
               <Button variant="hero" onClick={() => onPreview(config)}>
                 <Play className="w-4 h-4 mr-2" />
@@ -189,14 +270,21 @@ Always confirm the collected information with the customer before proceeding wit
                   <Input
                     id="name"
                     value={config.name}
-                    onChange={(e) => setConfig(prev => ({ ...prev, name: e.target.value }))}
+                    onChange={(e) =>
+                      setConfig((prev) => ({ ...prev, name: e.target.value }))
+                    }
                     placeholder="Enter agent name..."
                   />
                 </div>
 
                 <div>
                   <Label htmlFor="industry">Industry</Label>
-                  <Select value={config.industry} onValueChange={(value) => setConfig(prev => ({ ...prev, industry: value }))}>
+                  <Select
+                    value={config.industry}
+                    onValueChange={(value) =>
+                      setConfig((prev) => ({ ...prev, industry: value }))
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select industry" />
                     </SelectTrigger>
@@ -215,7 +303,12 @@ Always confirm the collected information with the customer before proceeding wit
                   <Textarea
                     id="description"
                     value={config.description}
-                    onChange={(e) => setConfig(prev => ({ ...prev, description: e.target.value }))}
+                    onChange={(e) =>
+                      setConfig((prev) => ({
+                        ...prev,
+                        description: e.target.value,
+                      }))
+                    }
                     placeholder="Describe what this agent does..."
                     rows={3}
                   />
@@ -225,13 +318,20 @@ Always confirm the collected information with the customer before proceeding wit
 
                 <div>
                   <Label htmlFor="model">AI Model</Label>
-                  <Select value={config.model} onValueChange={(value) => setConfig(prev => ({ ...prev, model: value }))}>
+                  <Select
+                    value={config.model}
+                    onValueChange={(value) =>
+                      setConfig((prev) => ({ ...prev, model: value }))
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="gpt-4">GPT-4</SelectItem>
-                      <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+                      <SelectItem value="gpt-3.5-turbo">
+                        GPT-3.5 Turbo
+                      </SelectItem>
                       <SelectItem value="claude-3">Claude 3</SelectItem>
                     </SelectContent>
                   </Select>
@@ -239,7 +339,12 @@ Always confirm the collected information with the customer before proceeding wit
 
                 <div>
                   <Label htmlFor="voice">Voice</Label>
-                  <Select value={config.voice} onValueChange={(value) => setConfig(prev => ({ ...prev, voice: value }))}>
+                  <Select
+                    value={config.voice}
+                    onValueChange={(value) =>
+                      setConfig((prev) => ({ ...prev, voice: value }))
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -271,7 +376,9 @@ Always confirm the collected information with the customer before proceeding wit
                         onClick={() => addField(fieldType.type)}
                         className="justify-start h-auto p-3"
                       >
-                        <div className={`w-3 h-3 rounded-full ${fieldType.color} mr-2`} />
+                        <div
+                          className={`w-3 h-3 rounded-full ${fieldType.color} mr-2`}
+                        />
                         <Icon className="w-4 h-4 mr-2" />
                         <span className="text-xs">{fieldType.label}</span>
                       </Button>
@@ -284,11 +391,30 @@ Always confirm the collected information with the customer before proceeding wit
 
           {/* Form Builder */}
           <div className="lg:col-span-2 space-y-6">
+            {/* System Prompt */}
+            <Card className="gradient-card shadow-card">
+              <CardHeader>
+                <CardTitle>System Prompt</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Textarea
+                  value={config.prompt}
+                  onChange={(e) =>
+                    setConfig((prev) => ({ ...prev, prompt: e.target.value }))
+                  }
+                  placeholder="Define how your agent should behave and interact with users..."
+                  rows={8}
+                  className="font-mono text-sm"
+                />
+              </CardContent>
+            </Card>
             <Card className="gradient-card shadow-card">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   Form Fields ({config.fields.length})
-                  <Badge variant="secondary">{config.fields.filter(f => f.required).length} required</Badge>
+                  <Badge variant="secondary">
+                    {config.fields.filter((f) => f.required).length} required
+                  </Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -303,20 +429,31 @@ Always confirm the collected information with the customer before proceeding wit
                         {config.fields.length === 0 ? (
                           <div className="text-center py-12 text-muted-foreground">
                             <Plus className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                            <p>Add fields from the left panel to start building your form</p>
+                            <p>
+                              Add fields from the left panel to start building
+                              your form
+                            </p>
                           </div>
                         ) : (
                           config.fields.map((field, index) => {
                             const Icon = getFieldIcon(field.type);
                             return (
-                              <Draggable key={field.id} draggableId={field.id} index={index}>
+                              <Draggable
+                                key={field.id}
+                                draggableId={field.id}
+                                index={index}
+                              >
                                 {(provided, snapshot) => (
                                   <div
                                     ref={provided.innerRef}
                                     {...provided.draggableProps}
                                     className={`border border-border rounded-lg p-4 bg-card ${
-                                      snapshot.isDragging ? 'shadow-glow' : ''
-                                    } ${selectedField?.id === field.id ? 'ring-2 ring-voice-primary' : ''}`}
+                                      snapshot.isDragging ? "shadow-glow" : ""
+                                    } ${
+                                      selectedField?.id === field.id
+                                        ? "ring-2 ring-voice-primary"
+                                        : ""
+                                    }`}
                                   >
                                     <div className="flex items-center justify-between">
                                       <div className="flex items-center space-x-3">
@@ -325,9 +462,14 @@ Always confirm the collected information with the customer before proceeding wit
                                         </div>
                                         <Icon className="w-4 h-4 text-voice-primary" />
                                         <div>
-                                          <p className="font-medium">{field.label}</p>
+                                          <p className="font-medium">
+                                            {field.label}
+                                          </p>
                                           <p className="text-sm text-muted-foreground capitalize">
-                                            {field.type} • {field.required ? 'Required' : 'Optional'}
+                                            {field.type} •{" "}
+                                            {field.required
+                                              ? "Required"
+                                              : "Optional"}
                                           </p>
                                         </div>
                                       </div>
@@ -335,7 +477,9 @@ Always confirm the collected information with the customer before proceeding wit
                                         <Button
                                           variant="ghost"
                                           size="sm"
-                                          onClick={() => setSelectedField(field)}
+                                          onClick={() =>
+                                            setSelectedField(field)
+                                          }
                                         >
                                           <Settings className="w-3 h-3" />
                                         </Button>
@@ -359,22 +503,6 @@ Always confirm the collected information with the customer before proceeding wit
                     )}
                   </Droppable>
                 </DragDropContext>
-              </CardContent>
-            </Card>
-
-            {/* System Prompt */}
-            <Card className="gradient-card shadow-card">
-              <CardHeader>
-                <CardTitle>System Prompt</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Textarea
-                  value={config.prompt}
-                  onChange={(e) => setConfig(prev => ({ ...prev, prompt: e.target.value }))}
-                  placeholder="Define how your agent should behave and interact with users..."
-                  rows={8}
-                  className="font-mono text-sm"
-                />
               </CardContent>
             </Card>
           </div>

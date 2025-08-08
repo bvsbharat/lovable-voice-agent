@@ -3,107 +3,127 @@ import { LandingHero } from "@/components/LandingHero";
 import { DashboardPage } from "./Dashboard";
 import { AgentBuilderPage } from "./AgentBuilder";
 import { PreviewModePage } from "./PreviewMode";
+import type { AgentConfig } from "@/types/agent";
+import { AgentsAPI } from "@/lib/api";
 
-type AppState = 'landing' | 'dashboard' | 'builder' | 'preview';
-
-interface AgentConfig {
-  name: string;
-  industry: string;
-  description: string;
-  model: string;
-  voice: string;
-  prompt: string;
-  fields: Array<{
-    id: string;
-    type: string;
-    label: string;
-    required: boolean;
-    placeholder?: string;
-  }>;
-}
+type AppState = "landing" | "dashboard" | "builder" | "preview";
 
 const Index = () => {
-  const [currentView, setCurrentView] = useState<AppState>('landing');
+  const [currentView, setCurrentView] = useState<AppState>("landing");
   const [previewConfig, setPreviewConfig] = useState<AgentConfig | null>(null);
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
 
   const handleExplore = () => {
-    setCurrentView('dashboard');
+    setCurrentView("dashboard");
   };
 
   const handleCreateAgent = () => {
-    setCurrentView('builder');
+    setCurrentView("builder");
   };
 
   const handleEditAgent = (agentId: string) => {
     // In a real app, this would load the agent config from API
-    console.log('Editing agent:', agentId);
-    setCurrentView('builder');
+    console.log("Editing agent:", agentId);
+    setCurrentView("builder");
   };
 
   const handlePreviewAgent = (agentId: string) => {
-    // In a real app, this would load the agent config from API
-    console.log('Previewing agent:', agentId);
-    // Mock config for demo
-    const mockConfig: AgentConfig = {
-      name: 'Demo Agent',
-      industry: 'Finance',
-      description: 'Demo agent for preview',
-      model: 'gpt-4',
-      voice: 'rachel',
-      prompt: 'Demo prompt',
-      fields: [
-        { id: '1', type: 'text', label: 'Full Name', required: true, placeholder: 'Enter your full name' },
-        { id: '2', type: 'email', label: 'Email Address', required: true, placeholder: 'Enter your email' },
-      ]
-    };
-    setPreviewConfig(mockConfig);
-    setCurrentView('preview');
+    // Navigate to the preview route with the agent ID
+    console.log("Navigating to preview for agent:", agentId);
+    window.location.href = `/preview/${agentId}`;
   };
 
   const handlePreviewFromBuilder = (config: AgentConfig) => {
-    setPreviewConfig(config);
-    setCurrentView('preview');
+    // Ensure the config has an ID for preview functionality
+    const configWithId: AgentConfig = {
+      ...config,
+      id: config.id || `builder_preview_${Date.now()}`,
+    };
+    setPreviewConfig(configWithId);
+    setPreviewError(null);
+    setCurrentView("preview");
   };
 
   const handleBackToDashboard = () => {
-    setCurrentView('dashboard');
+    setCurrentView("dashboard");
   };
 
   const handleBackToBuilder = () => {
-    setCurrentView('builder');
+    setCurrentView("builder");
   };
 
   switch (currentView) {
-    case 'landing':
+    case "landing":
       return <LandingHero onExplore={handleExplore} />;
-    
-    case 'dashboard':
+
+    case "dashboard":
       return (
-        <DashboardPage 
+        <DashboardPage
           onCreateAgent={handleCreateAgent}
           onEditAgent={handleEditAgent}
           onPreviewAgent={handlePreviewAgent}
         />
       );
-    
-    case 'builder':
+
+    case "builder":
       return (
-        <AgentBuilderPage 
+        <AgentBuilderPage
           onBack={handleBackToDashboard}
           onPreview={handlePreviewFromBuilder}
         />
       );
-    
-    case 'preview':
+
+    case "preview":
+      if (isLoadingPreview) {
+        return (
+          <div className="min-h-screen bg-background flex items-center justify-center">
+            <div className="text-center space-y-4">
+              <div className="w-8 h-8 mx-auto animate-spin rounded-full border-2 border-voice-primary border-t-transparent" />
+              <p className="text-muted-foreground">
+                Loading agent configuration...
+              </p>
+            </div>
+          </div>
+        );
+      }
+
+      if (previewError) {
+        return (
+          <div className="min-h-screen bg-background flex items-center justify-center">
+            <div className="text-center space-y-4">
+              <p className="text-destructive">
+                Error loading agent: {previewError}
+              </p>
+              <button
+                onClick={handleBackToDashboard}
+                className="px-4 py-2 bg-voice-primary text-white rounded hover:bg-voice-primary/90"
+              >
+                Back to Dashboard
+              </button>
+            </div>
+          </div>
+        );
+      }
+
       return previewConfig ? (
-        <PreviewModePage 
-          config={previewConfig}
-          onBack={handleBackToBuilder}
-        />
+        <PreviewModePage config={previewConfig} onBack={handleBackToBuilder} />
       ) : (
-        <div>Loading...</div>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <p className="text-muted-foreground">
+              No agent configuration available
+            </p>
+            <button
+              onClick={handleBackToDashboard}
+              className="px-4 py-2 bg-voice-primary text-white rounded hover:bg-voice-primary/90"
+            >
+              Back to Dashboard
+            </button>
+          </div>
+        </div>
       );
-    
+
     default:
       return <LandingHero onExplore={handleExplore} />;
   }
