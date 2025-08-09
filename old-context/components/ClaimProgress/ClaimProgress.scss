@@ -1,0 +1,363 @@
+.claimProgressContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 3rem;
+}
+
+.claimProgressCard {
+  background: #a4aaae42;
+  backdrop-filter: blur(8px);
+  border-radius: 16px;
+  padding: 24px 16px;
+  width: 100%;
+  max-width: 480px;
+  position: relative;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+
+  h2 {
+    margin: 0 0 20px;
+    font-size: 20px;
+    font-weight: 500;
+    color: #333;
+    text-align: left;
+  }
+}
+
+.closeButton {
+  background: #00739d;
+  border: none;
+  color: #fff;
+  padding: 1.25rem;
+  border-radius: 30px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 2rem;
+
+  &:hover {
+    background: #015573;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.progressValue {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-size: 24px;
+  font-weight: 600;
+  color: #00739d;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeInUp 0.4s ease forwards;
+}
+
+.progressBar {
+  height: 8px;
+  background: #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0;
+  position: relative;
+}
+
+.progressFill {
+  height: 100%;
+  background: #00739d;
+  border-radius: 4px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    transform: translateX(-100%);
+    animation: shimmer 2s infinite;
+  }
+}
+
+.endCallButton {
+  width: 100%;
+  padding: 16px;
+  background: #00739d;
+  border: none;
+  border-radius: 100px;
+  color: #fff;
+  font-weight: 500;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+
+  &:hover {
+    background: #015573;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 115, 157, 0.2);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.progressContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.progressHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  width: 100%;
+  padding: 0 1rem;
+
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: rgba(0, 0, 0, 0.8);
+    margin: 0;
+  }
+}
+
+.stopButton {
+  background: transparent;
+  border: 2px solid #00739d;
+  padding: 8px;
+  cursor: pointer;
+  color: #00739d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  position: absolute;
+  left: 0;
+  width: 40px;
+  height: 40px;
+
+  &:hover {
+    background: rgba(0, 115, 157, 0.1);
+    color: #015573;
+    border-color: #015573;
+  }
+}
+
+.endCallButton {
+  position: absolute;
+  right: 0;
+  width: auto;
+  padding: 12px 24px;
+  background: #00739d;
+  border: none;
+  border-radius: 100px;
+  color: #fff;
+  font-weight: 500;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: #015573;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 115, 157, 0.2);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.progressIndicator {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.progressNumber {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #000;
+}
+
+.claimProgressContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  width: 100%;
+}
+
+.claimProgressCard {
+  background: rgb(251, 251, 251);
+  backdrop-filter: blur(8px);
+  border-radius: 16px;
+  padding: 32px 24px;
+  width: 100%;
+  max-width: 480px;
+  position: relative;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+
+  h2 {
+    margin: 0 0 24px;
+    font-size: 28px;
+    font-weight: 600;
+    color: #333;
+    text-align: left;
+  }
+}
+
+.progressValue {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  font-size: 32px;
+  font-weight: 600;
+  color: #00739d;
+  background: transparent;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeInUp 0.4s ease forwards;
+}
+
+.progressBar {
+  height: 10px;
+  background: #bbbaba;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 0;
+  position: relative;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #00739d, #009688);
+  border-radius: 5px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    transform: translateX(-100%);
+    animation: shimmer 2s infinite;
+  }
+}
+
+.endCallButton {
+  width: 100%;
+  padding: 16px;
+  background: #00739d;
+  border: none;
+  border-radius: 100px;
+  color: #fff;
+  font-weight: 500;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+
+  &:hover {
+    background: #015573;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 115, 157, 0.2);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
