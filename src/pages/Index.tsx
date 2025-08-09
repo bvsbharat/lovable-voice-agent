@@ -1,132 +1,29 @@
-import { useState } from "react";
-import { LandingHero } from "@/components/LandingHero";
-import { DashboardPage } from "./Dashboard";
-import { AgentBuilderPage } from "./AgentBuilder";
-import { PreviewModePage } from "./PreviewMode";
-import type { AgentConfig } from "@/types/agent";
-import { AgentsAPI } from "@/lib/api";
-
-type AppState = "landing" | "dashboard" | "builder" | "preview";
+import { useNavigate } from "react-router-dom";
+import HeroGeometric from "@/components/ui/shape-landing-hero";
 
 const Index = () => {
-  const [currentView, setCurrentView] = useState<AppState>("landing");
-  const [previewConfig, setPreviewConfig] = useState<AgentConfig | null>(null);
-  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
-  const [previewError, setPreviewError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  const handleExplore = () => {
-    setCurrentView("dashboard");
+  const handleGetStarted = () => {
+    navigate("/dashboard");
   };
 
-  const handleCreateAgent = () => {
-    setCurrentView("builder");
+  const handleLearnMore = () => {
+    // You can add a learn more page or scroll to features section
+    console.log("Learn more clicked");
   };
 
-  const handleEditAgent = (agentId: string) => {
-    // In a real app, this would load the agent config from API
-    console.log("Editing agent:", agentId);
-    setCurrentView("builder");
-  };
-
-  const handlePreviewAgent = (agentId: string) => {
-    // Navigate to the preview route with the agent ID
-    console.log("Navigating to preview for agent:", agentId);
-    window.location.href = `/preview/${agentId}`;
-  };
-
-  const handlePreviewFromBuilder = (config: AgentConfig) => {
-    // Ensure the config has an ID for preview functionality
-    const configWithId: AgentConfig = {
-      ...config,
-      id: config.id || `builder_preview_${Date.now()}`,
-    };
-    setPreviewConfig(configWithId);
-    setPreviewError(null);
-    setCurrentView("preview");
-  };
-
-  const handleBackToDashboard = () => {
-    setCurrentView("dashboard");
-  };
-
-  const handleBackToBuilder = () => {
-    setCurrentView("builder");
-  };
-
-  switch (currentView) {
-    case "landing":
-      return <LandingHero onExplore={handleExplore} />;
-
-    case "dashboard":
-      return (
-        <DashboardPage
-          onCreateAgent={handleCreateAgent}
-          onEditAgent={handleEditAgent}
-          onPreviewAgent={handlePreviewAgent}
-        />
-      );
-
-    case "builder":
-      return (
-        <AgentBuilderPage
-          onBack={handleBackToDashboard}
-          onPreview={handlePreviewFromBuilder}
-        />
-      );
-
-    case "preview":
-      if (isLoadingPreview) {
-        return (
-          <div className="min-h-screen bg-background flex items-center justify-center">
-            <div className="text-center space-y-4">
-              <div className="w-8 h-8 mx-auto animate-spin rounded-full border-2 border-voice-primary border-t-transparent" />
-              <p className="text-muted-foreground">
-                Loading agent configuration...
-              </p>
-            </div>
-          </div>
-        );
-      }
-
-      if (previewError) {
-        return (
-          <div className="min-h-screen bg-background flex items-center justify-center">
-            <div className="text-center space-y-4">
-              <p className="text-destructive">
-                Error loading agent: {previewError}
-              </p>
-              <button
-                onClick={handleBackToDashboard}
-                className="px-4 py-2 bg-voice-primary text-white rounded hover:bg-voice-primary/90"
-              >
-                Back to Dashboard
-              </button>
-            </div>
-          </div>
-        );
-      }
-
-      return previewConfig ? (
-        <PreviewModePage config={previewConfig} onBack={handleBackToBuilder} />
-      ) : (
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="text-center space-y-4">
-            <p className="text-muted-foreground">
-              No agent configuration available
-            </p>
-            <button
-              onClick={handleBackToDashboard}
-              className="px-4 py-2 bg-voice-primary text-white rounded hover:bg-voice-primary/90"
-            >
-              Back to Dashboard
-            </button>
-          </div>
-        </div>
-      );
-
-    default:
-      return <LandingHero onExplore={handleExplore} />;
-  }
+  return (
+    <div className="min-h-screen">
+      <HeroGeometric 
+        badge="AI Voice Agents"
+        title1="Why AI Voice Agents"
+        title2="Make a Difference"
+        onGetStarted={handleGetStarted}
+        onLearnMore={handleLearnMore}
+      />
+    </div>
+  );
 };
 
 export default Index;
