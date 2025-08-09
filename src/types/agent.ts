@@ -44,6 +44,7 @@ export interface AgentConfig {
   published?: boolean;
   createdAt?: string;
   publishedAt?: string;
+  vapiAgentId?: string;
 }
 
 

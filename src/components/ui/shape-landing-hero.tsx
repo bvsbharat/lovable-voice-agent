@@ -190,7 +190,7 @@ function HeroGeometric({
                     >
                         <button 
                             onClick={onGetStarted}
-                            className="px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-lg hover:from-indigo-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+                            className="px-8 py-4 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 transition-all duration-300 shadow-lg hover:shadow-xl"
                         >
                             Get Started
                         </button>

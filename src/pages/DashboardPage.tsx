@@ -11,14 +11,16 @@ const DashboardPage = () => {
   const [previewConfig, setPreviewConfig] = useState<AgentConfig | null>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [editingAgentId, setEditingAgentId] = useState<string | null>(null);
 
   const handleCreateAgent = () => {
+    setEditingAgentId(null);
     setCurrentView("builder");
   };
 
   const handleEditAgent = (agentId: string) => {
-    // In a real app, this would load the agent config from API
     console.log("Editing agent:", agentId);
+    setEditingAgentId(agentId);
     setCurrentView("builder");
   };
 
@@ -60,6 +62,7 @@ const DashboardPage = () => {
     case "builder":
       return (
         <AgentBuilderPage
+          agentId={editingAgentId || undefined}
           onBack={handleBackToDashboard}
           onPreview={handlePreviewFromBuilder}
         />
@@ -88,7 +91,7 @@ const DashboardPage = () => {
               </p>
               <button
                 onClick={handleBackToDashboard}
-                className="px-4 py-2 bg-voice-primary text-white rounded hover:bg-voice-primary/90"
+                className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800"
               >
                 Back to Dashboard
               </button>
@@ -107,7 +110,7 @@ const DashboardPage = () => {
             </p>
             <button
               onClick={handleBackToDashboard}
-              className="px-4 py-2 bg-voice-primary text-white rounded hover:bg-voice-primary/90"
+              className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800"
             >
               Back to Dashboard
             </button>

@@ -212,21 +212,40 @@ app.get('/api/agents', async (_req, res) => {
     if (vapi) {
       try {
         const vapiResponse = await vapi.assistants.list();
-        vapiAssistants = vapiResponse.map(assistant => ({
-          id: assistant.id,
-          vapiAgentId: assistant.id,
-          name: assistant.name,
-          description: assistant.model?.systemMessage || '',
-          model: assistant.model?.model || 'gpt-3.5-turbo',
-          voice: assistant.voice?.voiceId || 'jennifer',
-          prompt: assistant.model?.systemMessage || '',
-          firstMessage: assistant.firstMessage || '',
-          createdAt: assistant.createdAt,
-          updatedAt: assistant.updatedAt,
-          published: true,
-          source: 'vapi', // Mark as Vapi agent
-          fields: [] // Vapi assistants don't have our custom fields structure
-        }));
+        vapiAssistants = vapiResponse.map(assistant => {
+          // Extract system prompt from model.messages where role is 'system'
+          let systemPrompt = '';
+          if (assistant.model?.messages && Array.isArray(assistant.model.messages)) {
+            const systemMessage = assistant.model.messages.find(msg => msg.role === 'system');
+            systemPrompt = systemMessage?.content || '';
+          }
+          
+          // Map voice ID back to our voice names
+          let voiceName = 'jennifer'; // default
+          if (assistant.voice?.voiceId) {
+            const voiceId = assistant.voice.voiceId;
+            if (voiceId.includes('JennyNeural')) voiceName = 'rachel';
+            else if (voiceId.includes('GuyNeural')) voiceName = 'josh';
+            else if (voiceId === 'pNInz6obpgDQGcFmaJgB') voiceName = 'aria';
+            else if (voiceId === 'sam') voiceName = 'sam';
+          }
+          
+          return {
+            id: assistant.id,
+            vapiAgentId: assistant.id,
+            name: assistant.name,
+            description: assistant.model?.systemMessage || systemPrompt || '',
+            model: assistant.model?.model || 'gpt-3.5-turbo',
+            voice: voiceName,
+            prompt: systemPrompt,
+            firstMessage: assistant.firstMessage || '',
+            createdAt: assistant.createdAt,
+            updatedAt: assistant.updatedAt,
+            published: true,
+            source: 'vapi', // Mark as Vapi agent
+            fields: [] // Vapi assistants don't have our custom fields structure
+          };
+        });
         console.log('[INFO] Retrieved', vapiAssistants.length, 'assistants from Vapi');
       } catch (e) {
         console.log('[WARN] Failed to list assistants from Vapi:', e.message);
@@ -284,14 +303,31 @@ app.get('/api/agents/:id', async (req, res) => {
       try {
         const vapiAssistant = await vapi.assistants.get(agentId);
         if (vapiAssistant) {
+          // Extract system prompt from model.messages where role is 'system'
+          let systemPrompt = '';
+          if (vapiAssistant.model?.messages && Array.isArray(vapiAssistant.model.messages)) {
+            const systemMessage = vapiAssistant.model.messages.find(msg => msg.role === 'system');
+            systemPrompt = systemMessage?.content || '';
+          }
+          
+          // Map voice ID back to our voice names
+          let voiceName = 'jennifer'; // default
+          if (vapiAssistant.voice?.voiceId) {
+            const voiceId = vapiAssistant.voice.voiceId;
+            if (voiceId.includes('JennyNeural')) voiceName = 'rachel';
+            else if (voiceId.includes('GuyNeural')) voiceName = 'josh';
+            else if (voiceId === 'pNInz6obpgDQGcFmaJgB') voiceName = 'aria';
+            else if (voiceId === 'sam') voiceName = 'sam';
+          }
+          
           const response = {
             id: vapiAssistant.id,
             vapiAgentId: vapiAssistant.id,
             name: vapiAssistant.name,
-            description: vapiAssistant.model?.systemMessage || '',
+            description: vapiAssistant.model?.systemMessage || systemPrompt || '',
             model: vapiAssistant.model?.model || 'gpt-3.5-turbo',
-            voice: vapiAssistant.voice?.voiceId || 'jennifer',
-            prompt: vapiAssistant.model?.systemMessage || '',
+            voice: voiceName,
+            prompt: systemPrompt,
             firstMessage: vapiAssistant.firstMessage || '',
             createdAt: vapiAssistant.createdAt,
             updatedAt: vapiAssistant.updatedAt,
@@ -299,7 +335,7 @@ app.get('/api/agents/:id', async (req, res) => {
             source: 'vapi',
             fields: []
           };
-          console.log('[INFO] Found agent in Vapi:', agentId);
+          console.log('[INFO] Found agent in Vapi:', agentId, 'with system prompt length:', systemPrompt.length);
           return res.json(response);
         }
       } catch (e) {
@@ -316,12 +352,73 @@ app.get('/api/agents/:id', async (req, res) => {
   }
 });
 
+// Helper function to check if ID is UUID format (VAPI agent)
+function isUUID(id) {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(id);
+}
+
 // Update agent
 app.put('/api/agents/:id', async (req, res) => {
   try {
+    const agentId = req.params.id;
+    
+    // Check if this is a VAPI agent (UUID format)
+    if (isUUID(agentId)) {
+      // This is a VAPI agent - update directly via VAPI API
+      if (!vapi) {
+        return res.status(500).json({ error: 'VAPI not configured' });
+      }
+      
+      try {
+        const vapiAssistantConfig = convertToVapiAgent(req.body);
+        const updatedAssistant = await vapi.assistants.update(agentId, vapiAssistantConfig);
+        
+        // Extract system prompt from updated assistant
+        let systemPrompt = '';
+        if (updatedAssistant.model?.messages && Array.isArray(updatedAssistant.model.messages)) {
+          const systemMessage = updatedAssistant.model.messages.find(msg => msg.role === 'system');
+          systemPrompt = systemMessage?.content || '';
+        }
+        
+        // Map voice ID back to our voice names
+        let voiceName = 'jennifer'; // default
+        if (updatedAssistant.voice?.voiceId) {
+          const voiceId = updatedAssistant.voice.voiceId;
+          if (voiceId.includes('JennyNeural')) voiceName = 'rachel';
+          else if (voiceId.includes('GuyNeural')) voiceName = 'josh';
+          else if (voiceId === 'pNInz6obpgDQGcFmaJgB') voiceName = 'aria';
+          else if (voiceId === 'sam') voiceName = 'sam';
+        }
+        
+        const response = {
+          id: updatedAssistant.id,
+          vapiAgentId: updatedAssistant.id,
+          name: updatedAssistant.name,
+          description: updatedAssistant.model?.systemMessage || systemPrompt || '',
+          model: updatedAssistant.model?.model || 'gpt-3.5-turbo',
+          voice: voiceName,
+          prompt: systemPrompt,
+          firstMessage: updatedAssistant.firstMessage || '',
+          createdAt: updatedAssistant.createdAt,
+          updatedAt: updatedAssistant.updatedAt,
+          published: true,
+          source: 'vapi',
+          fields: req.body.fields || []
+        };
+        
+        console.log('[INFO] VAPI agent updated successfully:', agentId);
+        return res.json(response);
+      } catch (e) {
+        console.error('[ERROR] Failed to update VAPI agent:', e.message);
+        return res.status(500).json({ error: 'Failed to update VAPI agent: ' + e.message });
+      }
+    }
+    
+    // Handle local agents (MongoDB or in-memory)
     if (dbConnected) {
       const agent = await Agent.findByIdAndUpdate(
-        req.params.id, 
+        agentId, 
         req.body, 
         { new: true, runValidators: true }
       );
@@ -342,11 +439,11 @@ app.put('/api/agents/:id', async (req, res) => {
       response.id = response._id;
       res.json(response);
     } else {
-      const existing = localAgents.get(req.params.id);
+      const existing = localAgents.get(agentId);
       if (!existing) return res.status(404).json({ error: 'Agent not found' });
       
       const updated = { ...existing, ...req.body, updatedAt: new Date().toISOString() };
-      localAgents.set(req.params.id, updated);
+      localAgents.set(agentId, updated);
       res.json(updated);
     }
   } catch (err) {

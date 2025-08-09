@@ -110,7 +110,7 @@ export const PreviewModePage = ({
           <p className="text-destructive">Error loading agent: {error}</p>
           <button
             onClick={handleBack}
-            className="px-4 py-2 bg-voice-primary text-white rounded hover:bg-voice-primary/90"
+            className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800"
           >
             Back to Dashboard
           </button>
@@ -128,7 +128,7 @@ export const PreviewModePage = ({
           </p>
           <button
             onClick={handleBack}
-            className="px-4 py-2 bg-voice-primary text-white rounded hover:bg-voice-primary/90"
+            className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800"
           >
             Back to Dashboard
           </button>

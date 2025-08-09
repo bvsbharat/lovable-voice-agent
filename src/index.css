@@ -52,6 +52,14 @@ All colors MUST be HSL.
     --gradient-card: linear-gradient(145deg, hsl(var(--card)) 0%, hsl(240 5.9% 12%) 100%);
     --gradient-button: linear-gradient(135deg, hsl(var(--voice-primary)), hsl(var(--primary-glow)));
     
+    /* Colorful Agent Card Gradients - Matching Reference Design */
+    --gradient-green: linear-gradient(135deg, #00d084 0%, #00b574 100%);
+    --gradient-orange: linear-gradient(135deg, #ffb800 0%, #ff9500 100%);
+    --gradient-purple: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    --gradient-blue: linear-gradient(135deg, #4285f4 0%, #1976d2 100%);
+    --gradient-pink: linear-gradient(135deg, #ff6b9d 0%, #e91e63 100%);
+    --gradient-teal: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
+    
     /* Shadows */
     --shadow-glow: 0 0 40px hsl(var(--voice-primary) / 0.3);
     --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.32);
@@ -147,6 +155,31 @@ All colors MUST be HSL.
   
   .gradient-button {
     background: var(--gradient-button);
+  }
+  
+  /* Colorful Agent Card Gradients */
+  .gradient-green {
+    background: var(--gradient-green);
+  }
+  
+  .gradient-orange {
+    background: var(--gradient-orange);
+  }
+  
+  .gradient-purple {
+    background: var(--gradient-purple);
+  }
+  
+  .gradient-blue {
+    background: var(--gradient-blue);
+  }
+  
+  .gradient-pink {
+    background: var(--gradient-pink);
+  }
+  
+  .gradient-teal {
+    background: var(--gradient-teal);
   }
   
   .shadow-glow {

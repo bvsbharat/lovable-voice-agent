@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "@/components/theme-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,13 +32,16 @@ import {
   DollarSign,
   FileText,
   Hash,
+  Loader2,
 } from "lucide-react";
 import type { AgentConfig, FormField, AgentFunction } from "@/types/agent";
 import { AgentsAPI } from "@/lib/api";
 
 interface AgentBuilderProps {
+  agentId?: string;
   onBack: () => void;
   onPreview: (config: AgentConfig) => void;
+  initialConfig?: Partial<AgentConfig>;
 }
 
 const fieldTypes = [
@@ -55,7 +59,8 @@ const fieldTypes = [
   },
 ];
 
-export const AgentBuilder = ({ onBack, onPreview }: AgentBuilderProps) => {
+export const AgentBuilder = ({ agentId, onBack, onPreview, initialConfig }: AgentBuilderProps) => {
+  const { theme } = useTheme();
   const [config, setConfig] = useState<AgentConfig>({
     name: "",
     industry: "",
@@ -67,8 +72,66 @@ export const AgentBuilder = ({ onBack, onPreview }: AgentBuilderProps) => {
     tools: [],
   });
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const [selectedField, setSelectedField] = useState<FormField | null>(null);
+
+  // Handle initial config from props (for prefill functionality)
+  useEffect(() => {
+    if (initialConfig && !agentId) {
+      console.log('Setting initial config from props:', initialConfig);
+      setConfig(prev => ({
+        ...prev,
+        ...initialConfig
+      }));
+    }
+  }, [initialConfig, agentId]);
+
+  // Load existing agent data when agentId is provided
+  useEffect(() => {
+    console.log('AgentBuilder useEffect triggered with agentId:', agentId);
+    const loadAgentData = async () => {
+      if (!agentId) {
+        console.log('No agentId provided, skipping data load');
+        return;
+      }
+      
+      console.log('Starting to load agent data for ID:', agentId);
+      setLoading(true);
+      setLoadError(null);
+      
+      try {
+        const agentData = await AgentsAPI.get(agentId);
+        console.log('Agent data received from API:', agentData);
+        console.log('Agent config structure:', {
+          id: agentData.id,
+          name: agentData.name,
+          industry: agentData.industry,
+          description: agentData.description,
+          model: agentData.model,
+          voice: agentData.voice,
+          fields: agentData.fields,
+          prompt: agentData.prompt
+        });
+        
+        setConfig(agentData);
+        console.log('Agent data successfully loaded and state updated');
+      } catch (error) {
+        console.error('Failed to load agent data:', error);
+        console.error('Error details:', {
+          message: error.message,
+          status: error.status,
+          response: error.response
+        });
+        setLoadError(error instanceof Error ? error.message : 'Failed to load agent data');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadAgentData();
+  }, [agentId]);
 
   // Generate collectFormData tool based on provided fields
   const generateCollectFormDataTool = (fields: FormField[]): AgentFunction => {
@@ -208,17 +271,55 @@ IMPORTANT: Use the collectFormData function to store information as you collect 
       const payload: AgentConfig = { ...config };
       console.log("[DEBUG] Saving agent with payload:", payload);
       console.log("[DEBUG] Tools in payload:", payload.tools);
-      const saved = await AgentsAPI.create(payload);
-      console.log("[DEBUG] Saved agent response:", saved);
+      
+      let saved: AgentConfig;
+      if (agentId && config.id) {
+        // Update existing agent
+        saved = await AgentsAPI.update(agentId, payload);
+        console.log("[DEBUG] Updated agent response:", saved);
+      } else {
+        // Create new agent
+        saved = await AgentsAPI.create(payload);
+        console.log("[DEBUG] Created agent response:", saved);
+      }
+      
       setConfig((prev) => ({
         ...prev,
         id: saved.id,
         createdAt: saved.createdAt,
+        updatedAt: saved.updatedAt,
       }));
     } finally {
       setSaving(false);
     }
   };
+
+  // Show loading state while fetching agent data
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-8 h-8 mx-auto animate-spin text-voice-primary" />
+          <p className="text-muted-foreground">Loading agent configuration...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if loading failed
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <p className="text-destructive">Error loading agent: {loadError}</p>
+          <Button onClick={onBack}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -232,22 +333,38 @@ IMPORTANT: Use the collectFormData function to store information as you collect 
                 Back
               </Button>
               <div>
-                <h1 className="text-2xl font-bold">Agent Builder</h1>
+                <h1 className="text-2xl font-bold">
+                  {agentId ? 'Edit Agent' : 'Agent Builder'}
+                </h1>
                 <p className="text-muted-foreground">
-                  Design your conversational AI agent
+                  {agentId ? 'Update your conversational AI agent' : 'Design your conversational AI agent'}
                 </p>
               </div>
             </div>
             <div className="flex space-x-2">
-              <Button variant="outline" onClick={generatePrompt}>
+              <Button 
+                variant="outline" 
+                onClick={generatePrompt} 
+                disabled={loading}
+                className={theme === 'dark' ? 'border-white hover:border-white/80' : ''}
+              >
                 <Settings className="w-4 h-4 mr-2" />
                 Generate Prompt
               </Button>
-              <Button variant="voice" onClick={saveAgent} disabled={saving}>
-                <Save className="w-4 h-4 mr-2" />
-                {saving ? "Saving..." : "Save"}
+              <Button variant="voice" onClick={saveAgent} disabled={saving || loading}>
+                {saving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    {agentId ? 'Updating...' : 'Saving...'}
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    {agentId ? 'Update' : 'Save'}
+                  </>
+                )}
               </Button>
-              <Button variant="hero" onClick={() => onPreview(config)}>
+              <Button variant="hero" onClick={() => onPreview(config)} disabled={loading}>
                 <Play className="w-4 h-4 mr-2" />
                 Preview
               </Button>
@@ -374,7 +491,9 @@ IMPORTANT: Use the collectFormData function to store information as you collect 
                         variant="outline"
                         size="sm"
                         onClick={() => addField(fieldType.type)}
-                        className="justify-start h-auto p-3"
+                        className={`justify-start h-auto p-3 ${
+                          theme === 'dark' ? 'border-white hover:border-white/80' : ''
+                        }`}
                       >
                         <div
                           className={`w-3 h-3 rounded-full ${fieldType.color} mr-2`}

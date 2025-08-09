@@ -9,17 +9,17 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-button",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border border-border bg-transparent hover:bg-accent hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
-        hero: "gradient-button text-white shadow-glow hover:shadow-button hover:scale-105 transition-bounce font-semibold",
-        voice: "bg-voice-primary text-white hover:bg-voice-primary/90 shadow-button",
-        success: "bg-voice-success text-white hover:bg-voice-success/90",
-        warning: "bg-voice-warning text-white hover:bg-voice-warning/90",
-        premium: "gradient-primary text-white shadow-glow hover:shadow-button hover:scale-105 transition-bounce border border-primary-glow/20",
+        default: "bg-black text-white hover:bg-gray-800 shadow-button",
+        destructive: "bg-black text-white hover:bg-gray-800",
+        outline: "border border-black bg-black text-white hover:bg-gray-800",
+        secondary: "bg-black text-white hover:bg-gray-800",
+        ghost: "bg-black text-white hover:bg-gray-800",
+        link: "bg-black text-white underline-offset-4 hover:underline hover:bg-gray-800",
+        hero: "bg-black text-white shadow-glow hover:bg-gray-800 hover:scale-105 transition-bounce font-semibold",
+        voice: "bg-black text-white hover:bg-gray-800 shadow-button",
+        success: "bg-black text-white hover:bg-gray-800",
+        warning: "bg-black text-white hover:bg-gray-800",
+        premium: "bg-black text-white shadow-glow hover:bg-gray-800 hover:scale-105 transition-bounce border border-gray-600",
       },
       size: {
         default: "h-10 px-4 py-2",

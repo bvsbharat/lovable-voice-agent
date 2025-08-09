@@ -32,7 +32,17 @@ export const AgentsAPI = {
     return http('/api/agents');
   },
   get(id: string): Promise<AgentConfig> {
-    return http(`/api/agents/${id}`);
+    console.log('AgentsAPI.get called with ID:', id);
+    console.log('Making request to:', `/api/agents/${id}`);
+    return http(`/api/agents/${id}`)
+      .then(response => {
+        console.log('AgentsAPI.get successful response:', response);
+        return response;
+      })
+      .catch(error => {
+        console.error('AgentsAPI.get error:', error);
+        throw error;
+      });
   },
   create(payload: AgentConfig): Promise<AgentConfig> {
     return http('/api/agents', { method: 'POST', body: JSON.stringify(payload) });
@@ -43,8 +53,14 @@ export const AgentsAPI = {
   delete(id: string): Promise<void> {
     return http(`/api/agents/${id}`, { method: 'DELETE' });
   },
-  publish(id: string): Promise<AgentConfig> {
-    return http(`/api/agents/${id}/publish`, { method: 'POST' });
+  publish(id: string, published: boolean = true): Promise<AgentConfig> {
+    return http(`/api/agents/${id}/publish`, { 
+      method: 'POST', 
+      body: JSON.stringify({ published }) 
+    });
+  },
+  sync(id: string): Promise<AgentConfig> {
+    return http(`/api/agents/${id}/sync`, { method: 'POST' });
   },
   previewCall(id: string): Promise<{ 
     ok: boolean; 
