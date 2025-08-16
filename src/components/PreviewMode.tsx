@@ -278,29 +278,19 @@ const PreviewMode: React.FC<PreviewModeProps> = ({ config, onBack }) => {
         <div className="relative mb-8">
           <div
             className={`w-64 h-64 rounded-full overflow-hidden bg-gradient-to-br from-orange-200 via-pink-200 to-purple-200 flex items-center justify-center cursor-pointer transition-all duration-300 relative ${
-              isCallActive
-                ? "animate-pulse shadow-2xl scale-105"
-                : "hover:scale-105"
+              isCallActive ? "shadow-2xl scale-105" : "hover:scale-105"
             } ${isConnecting ? "opacity-75" : ""}`}
             onClick={handleVoiceAvatarClick}
           >
             {/* Video Background */}
             <video
-              className="absolute inset-0 w-full h-full object-cover rounded-full"
+              className="absolute inset-0 w-full h-full object-cover rounded-full z-[1] scale-[1.36] opacity-100"
               src="https://cdn.dribbble.com/userupload/15697531/file/original-0242acdc69146d4472fc5e69b48616dc.mp4"
               autoPlay
               loop
               muted
               playsInline
             />
-
-            {/* Bot Icon - Circular Button with Transparent Icon */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
-                <Bot className="w-8 h-8 text-white/70" />
-              </div>
-            </div>
-
             {/* Volume indicator */}
             {isCallActive && volumeLevel > 0 && (
               <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 z-10">
@@ -396,33 +386,23 @@ const PreviewMode: React.FC<PreviewModeProps> = ({ config, onBack }) => {
       <div className="flex flex-col items-center justify-center text-center max-w-md mx-auto px-6">
         <div className="relative mb-12">
           <div
-            className={`w-64 h-64 rounded-full bg-gradient-to-br from-orange-200 via-pink-200 to-purple-200 flex items-center justify-center cursor-pointer transition-all duration-300 ${
-              isCallActive
-                ? "animate-pulse shadow-2xl scale-105"
-                : "hover:scale-105"
+            className={`w-64 h-64 rounded-full overflow-hidden bg-gradient-to-br from-orange-200 via-pink-200 to-purple-200 flex items-center justify-center cursor-pointer transition-all duration-300 relative ${
+              isCallActive ? "shadow-2xl scale-105" : "hover:scale-105"
             } ${isConnecting ? "opacity-75" : ""}`}
             onClick={handleVoiceAvatarClick}
           >
             {/* Video Background */}
             <video
-              className="absolute inset-0 w-full h-full object-cover rounded-full"
+              className="absolute inset-0 w-full h-full object-cover rounded-full z-[1] scale-[1.36] opacity-100"
               src="https://cdn.dribbble.com/userupload/15697531/file/original-0242acdc69146d4472fc5e69b48616dc.mp4"
               autoPlay
               loop
               muted
               playsInline
             />
-
-            {/* Bot Icon - Circular Button with Transparent Icon */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
-                <Bot className="w-10 h-10 text-white/70" />
-              </div>
-            </div>
-
             {/* Volume indicator */}
             {isCallActive && volumeLevel > 0 && (
-              <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2">
+              <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 z-10">
                 <div className="w-32 h-3 bg-white/30 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-green-400 to-blue-500 transition-all duration-100"
@@ -441,73 +421,74 @@ const PreviewMode: React.FC<PreviewModeProps> = ({ config, onBack }) => {
               ? "Connecting..."
               : isCallActive
               ? "Listening..."
-              : "Hi Ray, I'm your AI Claim Agent! Your personal assistant."}
+              : "Hi Ray, I'm GW-AI Claim Agent ! Your personal assistant."}
           </p>
-          <h1 className="text-4xl font-bold text-gray-900 leading-tight">
+          <h1 className="text-3xl font-bold text-gray-900 leading-tight">
             How can I help you today?
           </h1>
+        </div>
 
-          {!isCallActive && !isConnecting && (
-            <div className="pt-6">
+        {/* Progress indicator for desktop */}
+        {isCallActive && (
+          <div className="mt-8 w-full max-w-sm">
+            <div className="bg-white rounded-lg p-4 shadow-lg">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700">
+                  Claim Progress
+                </span>
+                <span className="text-sm text-gray-500">
+                  {Math.round(progress)}%
+                </span>
+              </div>
+              <Progress value={progress} className="w-full h-2" />
+            </div>
+          </div>
+        )}
+
+        {/* Call controls for desktop */}
+        {isCallActive && (
+          <div className="mt-6">
+            <div className="flex justify-center space-x-6">
               <Button
-                onClick={handleVoiceAvatarClick}
-                className="bg-yellow-500 hover:bg-yellow-600 text-white px-12 py-4 rounded-full text-lg font-semibold shadow-lg transition-all duration-200 hover:shadow-xl"
+                variant={isMuted ? "destructive" : "secondary"}
+                size="lg"
+                onClick={toggleMute}
+                className="rounded-full w-16 h-16"
               >
-                Press to start
+                {isMuted ? (
+                  <MicOff className="w-6 h-6" />
+                ) : (
+                  <Mic className="w-6 h-6" />
+                )}
+              </Button>
+              <Button
+                variant="destructive"
+                size="lg"
+                onClick={endCall}
+                className="rounded-full w-16 h-16"
+              >
+                <PhoneOff className="w-6 h-6" />
               </Button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* Progress indicator for desktop */}
-      {isCallActive && (
-        <div className="mt-8">
-          <div className="bg-white rounded-lg p-4 shadow-lg">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">
-                Claim Progress
-              </span>
-              <span className="text-sm text-gray-500">
-                {Math.round(progress)}%
-              </span>
-            </div>
-            <Progress value={progress} className="w-full" />
-          </div>
-        </div>
-      )}
-
-      {/* Call controls for desktop */}
-      {isCallActive && (
-        <div className="mt-6">
-          <div className="flex justify-center space-x-4">
-            <Button
-              variant={isMuted ? "destructive" : "secondary"}
-              size="lg"
-              onClick={toggleMute}
-              className="rounded-full w-14 h-14"
-            >
-              {isMuted ? (
-                <MicOff className="w-6 h-6" />
-              ) : (
-                <Mic className="w-6 h-6" />
-              )}
-            </Button>
-            <Button
-              variant="destructive"
-              size="lg"
-              onClick={endCall}
-              className="rounded-full w-14 h-14"
-            >
-              <PhoneOff className="w-6 h-6" />
-            </Button>
-          </div>
+      {/* Bottom Button - Desktop Style */}
+      {!isCallActive && !isConnecting && (
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
+          <Button
+            onClick={handleVoiceAvatarClick}
+            className="bg-yellow-500 hover:bg-yellow-600 text-white px-12 py-4 rounded-full text-lg font-semibold shadow-lg transition-all duration-200 hover:shadow-xl"
+          >
+            Press to start
+          </Button>
         </div>
       )}
 
       {/* Error Message for desktop */}
       {vapiError && (
-        <div className="mt-6">
+        <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2">
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
             <div className="flex items-center space-x-2 text-yellow-800">
               <AlertCircle className="w-4 h-4" />
